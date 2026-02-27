@@ -86,5 +86,17 @@ CodeCrux addresses this by delivering:
 👥 TEAM
 • Team Name: CodeCrux
 
-• Project: Healthcare AI Hackathon 2024
+• **Project**: Aurelion Hackathon (2026)
+
+• **Team Members**:
+
+1. Haarish
+
+2. Elaine Jose
+
+3.  Denila Jeslena
+
+4.  Nitharshana
+
+
 
