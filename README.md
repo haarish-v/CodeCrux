@@ -1,16 +1,16 @@
-**🏥 CodeCrux: Federated Multi-Modal ICU Crisis Prediction System**
+**🏥 Atriva: Federated Multi-Modal ICU Crisis Prediction System**
 
 Predicting Code Blue & Septic Shock 6 Hours in Advance
 
 **📌 OVERVIEW**
 
-• CodeCrux is an ICU-focused healthcare AI platform designed to predict critical patient deterioration.
+• Atriva is an ICU-focused healthcare AI platform designed to predict critical patient deterioration.
 
 • Predicts events like Code Blue and Septic Shock up to 6 hours before onset.
 
 • Integrates multiple ICU data streams into a unified prediction engine.
 
-• Developed by Team CodeCrux.
+• Developed by **Team CodeCrux.**
 
 **🎯 PROBLEM STATEMENT**
 
@@ -97,6 +97,7 @@ CodeCrux addresses this by delivering:
 3.  Denila Jeslena
 
 4.  Nitharshana
+
 
 
 
