@@ -1,0 +1,266 @@
+:root {
+  --bg-color: #050a15;
+  --panel-bg: rgba(9, 18, 38, 0.85);
+  --panel-border: rgba(0, 229, 255, 0.3);
+  --panel-border-glow: rgba(0, 229, 255, 0.5);
+
+  --text-main: #00e5ff;
+  --text-muted: #4d8b9f;
+  --text-alert: #ff2a2a;
+  --text-success: #00ffcc;
+  --text-warning: #ffcc00;
+
+  --font-mono: 'Share Tech Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  overflow: hidden;
+  /* Add a subtle grid background */
+  background-image:
+    linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+#root {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Base Panel Styling */
+.cyber-panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(0, 229, 255, 0.05);
+  position: relative;
+}
+
+.cyber-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  border-top: 2px solid var(--text-main);
+  border-left: 2px solid var(--text-main);
+}
+
+.cyber-panel::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  border-bottom: 2px solid var(--text-main);
+  border-right: 2px solid var(--text-main);
+}
+
+.panel-title {
+  color: var(--text-main);
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-title::before {
+  content: '■';
+  font-size: 0.7rem;
+}
+
+/* Animations */
+@keyframes pulseGlow {
+  0% {
+    text-shadow: 0 0 5px var(--text-success);
+  }
+
+  50% {
+    text-shadow: 0 0 20px var(--text-success), 0 0 30px var(--text-success);
+  }
+
+  100% {
+    text-shadow: 0 0 5px var(--text-success);
+  }
+}
+
+.status-live {
+  color: var(--text-success);
+  animation: pulseGlow 2s infinite;
+}
+
+.status-critical {
+  color: var(--text-alert) !important;
+  text-shadow: 0 0 10px rgba(255, 42, 42, 0.8);
+  border-color: rgba(255, 42, 42, 0.5) !important;
+}
+
+.status-critical-bg {
+  background: rgba(40, 5, 5, 0.8) !important;
+  box-shadow: inset 0 0 30px rgba(255, 0, 0, 0.3) !important;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--panel-border);
+}
+
+/* ECG Specific Grid Background */
+.ecg-grid {
+  background-color: #06111a;
+  background-image:
+    linear-gradient(rgba(0, 255, 204, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 204, 0.1) 1px, transparent 1px);
+  background-size: 30px 30px;
+  background-position: center bottom;
+}
+
+/* 2.5D Heart Sprite Animations */
+@keyframes heartBeatNormal {
+  0% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.4));
+  }
+
+  15% {
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 20px rgba(0, 229, 255, 0.8));
+  }
+
+  30% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.4));
+  }
+
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.4));
+  }
+}
+
+@keyframes heartBeatCritical {
+  0% {
+    transform: scale(0.9);
+    filter: drop-shadow(0 0 15px rgba(255, 42, 42, 0.8)) hue-rotate(-20deg) saturate(2);
+  }
+
+  5% {
+    transform: scale(0.95);
+    filter: drop-shadow(0 0 30px rgba(255, 42, 42, 1)) hue-rotate(-20deg) saturate(2);
+  }
+
+  10% {
+    transform: scale(0.9);
+    filter: drop-shadow(0 0 15px rgba(255, 42, 42, 0.8)) hue-rotate(-20deg) saturate(2);
+  }
+
+  100% {
+    transform: scale(0.9);
+    filter: drop-shadow(0 0 15px rgba(255, 42, 42, 0.8)) hue-rotate(-20deg) saturate(2);
+  }
+}
+
+.heart-sprite {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: all 0.5s ease;
+}
+
+.heart-normal {
+  animation: heartBeatNormal 1s infinite cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.heart-critical {
+  animation: heartBeatCritical 0.4s infinite linear;
+  /* Tachycardia/V-Fib simulation */
+}
+
+/* Responsive Overrides */
+@media (max-width: 1400px) {
+  .dashboard-grid {
+    grid-template-columns: 250px 1fr 280px !important;
+  }
+}
+
+@media (max-width: 1100px) {
+  .dashboard-grid {
+    grid-template-columns: 250px 1fr !important;
+    grid-template-areas:
+      "left center"
+      "right right";
+  }
+
+  .right-sidebar {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 800px) {
+  body {
+    overflow-y: auto;
+  }
+
+  #root {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    height: auto !important;
+    padding: 15px !important;
+    gap: 15px !important;
+  }
+
+  .header-controls {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .right-sidebar {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .ecg-grid {
+    min-height: 250px;
+  }
+
+  .heart-container {
+    display: none !important;
+  }
+}
