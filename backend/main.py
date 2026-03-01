@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import telemetry, predict_realtime, patient, llm
+from routes import telemetry, predict_realtime, patient, llm, auth
 
 app = FastAPI(
     title="ATRIVA Omniscient Engine",
@@ -22,6 +22,7 @@ app.include_router(telemetry.router)
 app.include_router(predict_realtime.router)
 app.include_router(patient.router)
 app.include_router(llm.router)
+app.include_router(auth.router)
 
 @app.get("/")
 async def root():

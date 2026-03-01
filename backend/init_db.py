@@ -46,6 +46,28 @@ def create_database():
             FOREIGN KEY (patient_id) REFERENCES patients(patient_id) ON DELETE CASCADE
         )
         """)
+
+        # Create users table for RBAC
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(50) UNIQUE NOT NULL,
+            password VARCHAR(255) NOT NULL,
+            role VARCHAR(50) NOT NULL,
+            assigned_patients VARCHAR(255)
+        )
+        """)
+
+        # Create audit_log table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS audit_log (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(50) NOT NULL,
+            action VARCHAR(255) NOT NULL,
+            endpoint VARCHAR(255) NOT NULL,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
         
         print("Tables created successfully.")
         
@@ -60,6 +82,8 @@ def create_database():
         # Clear existing data to avoid duplicates on multiple runs
         cursor.execute("DELETE FROM medications")
         cursor.execute("DELETE FROM patients")
+        cursor.execute("DELETE FROM users")
+        cursor.execute("DELETE FROM audit_log")
         
         patient_insert = """
         INSERT INTO patients (patient_id, name, age, sex, blood_group, allergies, device, ward, dat_link, csv_link)
@@ -88,6 +112,20 @@ def create_database():
         VALUES (%s, %s, %s, %s)
         """
         cursor.executemany(med_insert, meds_data)
+        
+        # Insert users
+        # For simplicity in this mock, we use plain text passwords. In a real app, hash these!
+        users_data = [
+            ("chief", "chief123", "chief_doctor", "ALL"),
+            ("specialist1", "spec123", "specialist_doctor", "100,105"),
+            ("specialist2", "spec123", "specialist_doctor", "200,231"),
+            ("nurse", "nurse123", "low_level", "NONE")
+        ]
+        user_insert = """
+        INSERT INTO users (username, password, role, assigned_patients)
+        VALUES (%s, %s, %s, %s)
+        """
+        cursor.executemany(user_insert, users_data)
         
         conn.commit()
         print("Successfully inserted 4 mock patients and their medications into atriva_db.")

@@ -5,6 +5,7 @@ import { PatientPayload } from './components/PatientPayload';
 import { AlertLog } from './components/AlertLog';
 import { ECGWaveform } from './components/ECGWaveform';
 import { DigitalTwin3D } from './components/DigitalTwin3D';
+import { Login } from './components/Login';
 
 function App() {
     const [telemetry, setTelemetry] = useState(null);
@@ -13,6 +14,10 @@ function App() {
     const [uptime, setUptime] = useState(0);
     const [uploadResults, setUploadResults] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
+
+    // Auth State
+    const [authData, setAuthData] = useState(null);
+    const [authError, setAuthError] = useState(null);
 
     // MySQL Database Bindings
     const [patientInfo, setPatientInfo] = useState(null);
@@ -116,25 +121,44 @@ function App() {
         setScenario(type);
         setIsMuted(false); // Reset mute state when patient/scenario changes
         setClinicalNote(null); // Clear previous AI note
+        setAuthError(null);    // Clear any previous auth errors
+
         try {
             await fetch(`http://${window.location.hostname}:8000/api/scenario/${type}`, { method: 'POST' });
 
             // Fetch synchronized MySQL DB Details for this patient ID
             const riskId = isNaN(type) ? (type === 'critical' ? '231' : '100') : type;
-            const res = await fetch(`http://${window.location.hostname}:8000/api/patient/${riskId}`);
+
+            const headers = {};
+            if (authData && authData.access_token) {
+                headers['Authorization'] = `Bearer ${authData.access_token}`;
+            }
+
+            const res = await fetch(`http://${window.location.hostname}:8000/api/patient/${riskId}`, {
+                headers: headers
+            });
+
             if (res.ok) {
                 const dbInfo = await res.json();
                 setPatientInfo(dbInfo);
+            } else if (res.status === 401 || res.status === 403) {
+                const errData = await res.json();
+                setAuthError(`[ACCESS DENIED] ${errData.detail}`);
+                setPatientInfo(null); // Clear patient info on denial
+            } else {
+                setPatientInfo(null);
             }
         } catch (e) {
             console.error("Failed to inject scenario or fetch DB", e);
         }
     };
 
-    // Initial Load
+    // Initial Load - wait for auth before loading
     useEffect(() => {
-        handleInject('100');
-    }, []);
+        if (authData) {
+            handleInject('100');
+        }
+    }, [authData]);
 
     const riskScore = telemetry?.ai_insight?.fusion_risk_score || 0.15;
     const isCritical = riskScore > 0.8;
@@ -252,6 +276,16 @@ function App() {
         }
     };
 
+    const handleLogout = () => {
+        setAuthData(null);
+        setPatientInfo(null);
+        setScenario('stable');
+    };
+
+    if (!authData) {
+        return <Login onLogin={setAuthData} />;
+    }
+
     return (
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '10px', gap: '10px' }}>
 
@@ -302,6 +336,17 @@ function App() {
                         <div style={{ fontSize: '1.2rem', color: 'var(--text-main)' }}>AES-256</div>
                         <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>ENCRYPTION</div>
                     </div>
+                    <div style={{ textAlign: 'center', borderLeft: '1px solid var(--border-glow)', paddingLeft: '15px' }}>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-main)', textTransform: 'uppercase' }}>{authData.user.username}</div>
+                        <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>{authData.user.role.replace('_', ' ')}</div>
+                    </div>
+                    <button
+                        onClick={handleLogout}
+                        className="cyber-panel"
+                        style={{ padding: '6px 15px', color: 'var(--text-main)', borderColor: 'var(--border-glow)', cursor: 'pointer', background: 'transparent', fontSize: '0.7rem' }}
+                    >
+                        LOGOUT
+                    </button>
                     <div className="cyber-panel" style={{ padding: '6px 20px', color: connected ? 'var(--text-success)' : 'var(--text-muted)', borderColor: connected ? 'var(--text-success)' : 'var(--text-muted)', cursor: 'pointer' }} onClick={handleFileUploadRequest} title="Batch Offline Inference">
                         <span className={connected ? "status-live" : ""}>● {connected ? 'LIVE' : 'OFFLINE'}</span>
                     </div>
@@ -325,31 +370,48 @@ function App() {
                         </div>
                     </div>
 
-                    <div className="cyber-panel" style={{ flex: '0 0 auto', padding: '15px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                    <div className="cyber-panel" style={{ flex: '0 0 auto', padding: '15px', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' }}>
                         <div className="panel-title">PATIENT DETAILS</div>
-                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginBottom: '10px' }}>[ENCRYPTED PAYLOAD]</div>
-                        <PatientPayload />
-
-                        {patientInfo ? (
-                            <div style={{ marginTop: '10px', fontSize: '0.70rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>PATIENT ID:</span><span>PT-{patientInfo.patient_id}</span></div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>DEVICE:</span><span>{patientInfo.device}</span></div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>WARD:</span><span>{patientInfo.ward}</span></div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>TIMESTAMP:</span><span>{new Date().toISOString().split('.')[0].replace('T', ' ')} UTC</span></div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}><span style={{ color: 'var(--text-muted)' }}>NAME:</span><span>{patientInfo.name}</span></div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>AGE / SEX:</span><span>{patientInfo.age} / {patientInfo.sex}</span></div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>BLOOD GROUP:</span><span>{patientInfo.blood_group}</span></div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>ALLERGIES:</span><span>{patientInfo.allergies}</span></div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>ADMITTED:</span><span>{new Date(patientInfo.admitted).toISOString().split('T')[0]}</span></div>
-
-                                <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed var(--border-glow)' }}>
-                                    <div style={{ color: 'var(--text-muted)', marginBottom: '5px' }}>DATA SOURCES (DB LINKS):</div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.6rem' }}><span>CSV:</span><span style={{ color: 'var(--text-success)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>{patientInfo.csv_link}</span></div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.6rem' }}><span>DAT:</span><span style={{ color: 'var(--text-success)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>{patientInfo.dat_link}</span></div>
-                                </div>
+                        {authError ? (
+                            <div style={{
+                                marginTop: '20px',
+                                padding: '15px',
+                                border: '1px solid var(--text-alert)',
+                                backgroundColor: 'rgba(255, 42, 42, 0.1)',
+                                color: 'var(--text-alert)',
+                                textAlign: 'center',
+                                fontSize: '0.8rem',
+                                lineHeight: '1.5'
+                            }}>
+                                ⚠️ SECURITY OVERRIDE REQUIRED<br />
+                                <br />
+                                {authError}
                             </div>
+                        ) : patientInfo ? (
+                            <>
+                                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginBottom: '10px' }}>[DECRYPTED PAYLOAD]</div>
+                                <PatientPayload />
+
+                                <div style={{ marginTop: '10px', fontSize: '0.70rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>PATIENT ID:</span><span>PT-{patientInfo.patient_id}</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>DEVICE:</span><span>{patientInfo.device}</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>WARD:</span><span>{patientInfo.ward}</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>TIMESTAMP:</span><span>{new Date().toISOString().split('.')[0].replace('T', ' ')} UTC</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}><span style={{ color: 'var(--text-muted)' }}>NAME:</span><span>{patientInfo.name}</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>AGE / SEX:</span><span>{patientInfo.age} / {patientInfo.sex}</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>BLOOD GROUP:</span><span>{patientInfo.blood_group}</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>ALLERGIES:</span><span>{patientInfo.allergies}</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>ADMITTED:</span><span>{new Date(patientInfo.admitted).toISOString().split('T')[0]}</span></div>
+
+                                    <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed var(--border-glow)' }}>
+                                        <div style={{ color: 'var(--text-muted)', marginBottom: '5px' }}>DATA SOURCES (DB LINKS):</div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.6rem' }}><span>CSV:</span><span style={{ color: 'var(--text-success)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>{patientInfo.csv_link}</span></div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.6rem' }}><span>DAT:</span><span style={{ color: 'var(--text-success)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>{patientInfo.dat_link}</span></div>
+                                    </div>
+                                </div>
+                            </>
                         ) : (
-                            <div style={{ marginTop: '20px', color: 'var(--text-muted)', textAlign: 'center' }}>Querying DB...</div>
+                            <div style={{ marginTop: '20px', color: 'var(--text-muted)', textAlign: 'center' }}>Querying Secure DB...</div>
                         )}
                     </div>
                 </div>
