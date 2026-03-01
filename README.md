@@ -4,7 +4,7 @@ A state-of-the-art, multi-modal, federated AI critical care prognosis dashboard.
 
 **ATRIVA** acts as an omniscient digital twin for ICU patients. It ingests high-frequency electrocardiograms (ECG) and continuous vitals, runs them through a live PyTorch Neural Network, calculates Code Blue risk scores in real-time, and generates professional, actionable clinical notes via an embedded Large Language Model.
 
-![ATRIVA Dashboard](C:/Users/haari/.gemini/antigravity/brain/5fabebf2-6291-4536-861f-f6eaf2db5098/critical_patient_verification_1772223710233.png)
+<img width="1920" height="1080" alt="Screenshot (25)" src="https://github.com/user-attachments/assets/58f14c81-ff44-4223-afb4-448df9e17f26" />
 
 ---
 
