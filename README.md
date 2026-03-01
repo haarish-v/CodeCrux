@@ -1,6 +1,6 @@
 # ATRIVA: Aegis-Omni ICU Telemetry Dashboard 🫀🤖
 
-A state-of-the-art, multi-modal, federated AI critical care prognosis dashboard. Built for the CodeCrux hackathon (Aurelion Hackathon 2026).
+A state-of-the-art, multi-modal, federated AI critical care prognosis dashboard. Built for the CodeCrux hackathon (Aurelion Hackathon 2026; Won 5th Place).
 
 **ATRIVA** acts as an omniscient digital twin for ICU patients. It ingests high-frequency electrocardiograms (ECG) and continuous vitals, runs them through a live PyTorch Neural Network, calculates Code Blue risk scores in real-time, and generates professional, actionable clinical notes via an embedded Large Language Model.
 
